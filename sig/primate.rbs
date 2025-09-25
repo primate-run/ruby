@@ -1,0 +1,162 @@
+# RBS type signatures for Primate Ruby gem
+
+module Primate
+  VERSION: String
+
+  class URL
+    attr_reader href: String
+    attr_reader origin: String
+    attr_reader protocol: String
+    attr_reader username: String
+    attr_reader password: String
+    attr_reader host: String
+    attr_reader hostname: String
+    attr_reader port: String
+    attr_reader pathname: String
+    attr_reader search: String
+    attr_reader hash: String
+
+    def initialize: (untyped url) -> void
+  end
+
+  class Readable
+    attr_reader content_type: String?
+
+    def initialize: (untyped typed_array, String? content_type) -> void
+    def size: () -> Integer
+    def eof?: () -> bool
+    def rewind: () -> self
+    def read: (?Integer? n) -> String
+    def bytes: (?Integer? n) -> Array[Integer]
+    def peek: (Integer n) -> Array[Integer]
+    def head: (?Integer n) -> Array[Integer]
+    def each_chunk: (?Integer chunk) { (String) -> void } -> self
+                  | (?Integer chunk) -> Enumerator[String, self]
+  end
+
+  class UploadedFile
+    attr_reader field: String
+    attr_reader filename: String
+    attr_reader content_type: String
+    attr_reader size: Integer
+
+    def initialize: (field: String, name: String, type: String, size: Integer, bytes: untyped) -> void
+    def io: () -> Readable
+  end
+end
+
+class RequestBody
+  def initialize: (untyped body, untyped helpers) -> void
+  def json: () -> Hash[String, untyped]
+  def text: () -> String
+  def fields: () -> Hash[String, untyped]
+  def files: () -> Array[Primate::UploadedFile]
+  def binary: () -> Primate::Readable
+end
+
+class RequestBag
+  def initialize: (untyped data, untyped helpers) -> void
+  def get: (String key) -> String
+  def []: (String key) -> String
+  def try: (String key) -> String?
+  def has?: (String key) -> bool
+  def parse: (untyped schema, ?bool coerce) -> untyped
+  def to_h: () -> Hash[String, untyped]
+  def size: () -> Integer
+end
+
+class Request
+  attr_reader url: Primate::URL
+  attr_reader body: RequestBody
+  attr_reader path: RequestBag
+  attr_reader query: RequestBag
+  attr_reader headers: RequestBag
+  attr_reader cookies: RequestBag
+
+  def initialize: (untyped request, untyped helpers) -> void
+end
+
+class SessionInstance
+  def initialize: (untyped session, untyped helpers) -> void
+  def id: () -> String
+  def exists: () -> bool
+  def create: (Hash[String, untyped] data) -> void
+  def get: () -> Hash[String, untyped]
+  def try: () -> Hash[String, untyped]
+  def set: (Hash[String, untyped] data) -> void
+  def destroy: () -> void
+end
+
+module Session
+  def self.set_current: (SessionInstance session_instance) -> void
+  def self.id: () -> String?
+  def self.exists?: () -> bool
+  def self.create: (Hash[String, untyped] data) -> void
+  def self.get: () -> Hash[String, untyped]
+  def self.try: () -> Hash[String, untyped]
+  def self.set: (Hash[String, untyped] data) -> void
+  def self.destroy: () -> void
+end
+
+module Response
+  def self.view: (String name, ?Hash[String, untyped] props, ?Hash[String, untyped] options) -> Hash[Symbol, untyped]
+  def self.redirect: (String location, ?Hash[String, untyped] options) -> Hash[Symbol, untyped]
+  def self.error: (?Hash[String, untyped] options) -> Hash[Symbol, untyped]
+end
+
+module Route
+  def self.get: () { (Request) -> untyped } -> void
+  def self.post: () { (Request) -> untyped } -> void
+  def self.put: () { (Request) -> untyped } -> void
+  def self.patch: () { (Request) -> untyped } -> void
+  def self.delete: () { (Request) -> untyped } -> void
+  def self.head: () { (Request) -> untyped } -> void
+  def self.options: () { (Request) -> untyped } -> void
+  def self.connect: () { (Request) -> untyped } -> void
+  def self.trace: () { (Request) -> untyped } -> void
+  def self.routes: () -> Hash[String, Proc]
+  def self.set_session: (untyped session, untyped helpers) -> void
+  def self.call_route: (String method, Request request) -> untyped
+end
+
+module Pema
+  class ValidationError < StandardError
+  end
+
+  class Field
+    def parse: (untyped value, ?bool coerce) -> untyped
+  end
+
+  class StringType < Field
+    def parse: (untyped value, ?bool coerce) -> String
+  end
+
+  class BooleanType < Field
+    def parse: (untyped value, ?bool coerce) -> bool
+  end
+
+  class IntType < Field
+    def parse: (untyped value, ?bool coerce) -> Integer
+  end
+
+  class FloatType < Field
+    def parse: (untyped value, ?bool coerce) -> Float
+  end
+
+  class Schema
+    def initialize: (Hash[String, Field] fields) -> void
+    def parse: (Hash[String, untyped] data, ?bool coerce) -> Hash[String, untyped]
+  end
+
+  def self.string: () -> StringType
+  def self.boolean: () -> BooleanType
+  def self.int: () -> IntType
+  def self.float: () -> FloatType
+  def self.schema: (Hash[String, Field] fields) -> Schema
+end
+
+module PrimateInternal
+  def self.set_session: (untyped session, untyped helpers) -> void
+end
+
+def type: (untyped value, untyped helpers) -> untyped
