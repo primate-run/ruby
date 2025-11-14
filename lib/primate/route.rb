@@ -4,101 +4,49 @@ require_relative 'request'
 require_relative 'response'
 require_relative '../primate'
 
-# Route registration and handling
 module Route
-  @routes = {}
+  @registry = Hash.new { |h, k| h[k] = {} }
+  @current_scope = "__global__"
 
-  # Register a GET route handler
-  #
-  # @yieldparam request [Request] The HTTP request object
-  # @return [void]
-  def self.get(&block)
-    @routes['GET'] = block
-  end
+  class << self
+    # set the active scope for subsequent handler registrations
+    def scope(id)
+      @current_scope = id.to_s
+      @registry[@current_scope]
+    end
 
-  # Register a POST route handler
-  #
-  # @yieldparam request [Request] The HTTP request object
-  # @return [void]
-  def self.post(&block)
-    @routes['POST'] = block
-  end
+    # clear routes for a specific scope (or the current scope if none given)
+    def clear(id = nil)
+      target = (id || @current_scope).to_s
+      @registry.delete(target)
+      @registry[target] = {}
+    end
 
-  # Register a PUT route handler
-  #
-  # @yieldparam request [Request] The HTTP request object
-  # @return [void]
-  def self.put(&block)
-    @routes['PUT'] = block
-  end
+    # return the verb->handler map for a scope (read-only use)
+    def registry(id = nil)
+      @registry[(id || @current_scope).to_s]
+    end
 
-  # Register a PATCH route handler
-  #
-  # @yieldparam request [Request] The HTTP request object
-  # @return [void]
-  def self.patch(&block)
-    @routes['PATCH'] = block
-  end
+    %w[GET POST PUT PATCH DELETE HEAD OPTIONS CONNECT TRACE].each do |verb|
+      define_method(verb.downcase) do |&block|
+        raise ArgumentError, "block required" unless block
+        registry[verb] = block
+      end
+    end
 
-  # Register a DELETE route handler
-  #
-  # @yieldparam request [Request] The HTTP request object
-  # @return [void]
-  def self.delete(&block)
-    @routes['DELETE'] = block
-  end
+    def set_session(session, helpers)
+      PrimateInternal.set_session(session, helpers)
+    end
 
-  # Register a HEAD route handler
-  #
-  # @yieldparam request [Request] The HTTP request object
-  # @return [void]
-  def self.head(&block)
-    @routes['HEAD'] = block
-  end
+    def call_js(scope_id, verb, js_req, helpers, session)
+      set_session(session, helpers)
+      request = Request.new(js_req, helpers)
 
-  # Register a OPTIONS route handler
-  #
-  # @yieldparam request [Request] The HTTP request object
-  # @return [void]
-  def self.options(&block)
-    @routes['OPTIONS'] = block
-  end
+      verb_up = verb.to_s.upcase
+      handler = @registry.dig(scope_id.to_s, verb_up)
+      return Response.error(status: 404) unless handler
 
-  # Register a CONNECT route handler
-  #
-  # @yieldparam request [Request] The HTTP request object
-  # @return [void]
-  def self.connect(&block)
-    @routes['CONNECT'] = block
-  end
-
-  # Register a TRACE route handler
-  #
-  # @yieldparam request [Request] The HTTP request object
-  # @return [void]
-  def self.trace(&block)
-    @routes['TRACE'] = block
-  end
-
-  # Get all registered routes
-  #
-  # @return [Hash] Hash of HTTP method => handler block
-  def self.routes
-    @routes
-  end
-
-  def self.set_session(session, helpers)
-    PrimateInternal.set_session(session, helpers)
-  end
-  # Execute a route handler for the given HTTP method
-  #
-  # @param method [String] HTTP method
-  # @param request [Request] Request object
-  # @return [Object] Response from the route handler
-  def self.call_route(method, request)
-    handler = @routes[method.upcase]
-    return Response.error(status: 404) unless handler
-
-    handler.call(request)
+      handler.call(request)
+    end
   end
 end

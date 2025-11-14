@@ -49,7 +49,7 @@ class RequestBody
   def initialize: (untyped body, untyped helpers) -> void
   def json: () -> Hash[String, untyped]
   def text: () -> String
-  def fields: () -> Hash[String, untyped]
+  def form: () -> Hash[String, untyped]
   def files: () -> Array[Primate::UploadedFile]
   def binary: () -> Primate::Readable
 end
@@ -105,6 +105,9 @@ module Response
 end
 
 module Route
+  def self.scope: (String id) -> void
+  def self.clear: (?String id) -> void
+  def self.registry: (?String id) -> Hash[String, Proc]
   def self.get: () { (Request) -> untyped } -> void
   def self.post: () { (Request) -> untyped } -> void
   def self.put: () { (Request) -> untyped } -> void
@@ -114,8 +117,7 @@ module Route
   def self.options: () { (Request) -> untyped } -> void
   def self.connect: () { (Request) -> untyped } -> void
   def self.trace: () { (Request) -> untyped } -> void
-  def self.routes: () -> Hash[String, Proc]
-  def self.set_session: (untyped session, untyped helpers) -> void
+  def self.call_js: (String scope_id, String verb, untyped js_req, untyped helpers, untyped session) -> untyped
   def self.call_route: (String method, Request request) -> untyped
 end
 

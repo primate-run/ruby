@@ -29,11 +29,11 @@ class RequestBody
     @body.text.to_s
   end
 
-  # Get form fields as hash
+  # Get form as hash
   #
-  # @return [Hash] Form field data
-  def fields
-    JSON.parse(@body.fields.to_s)
+  # @return [Hash] Form data
+  def form
+    JSON.parse(@body.form.to_s)
   end
 
   def files
