@@ -2,6 +2,7 @@
 
 require_relative 'request'
 require_relative 'response'
+require_relative 'i18n'
 require_relative '../primate'
 
 module Route
@@ -38,10 +39,15 @@ module Route
       PrimateInternal.set_session(session, helpers)
     end
 
-    def call_js(scope_id, verb, js_req, helpers, session)
-      set_session(session, helpers)
-      request = Request.new(js_req, helpers)
+    def set_i18n(i18n)
+      I18N.set_current(i18n)
+    end
 
+    def call_js(scope_id, verb, js_req, helpers, session, i18n)
+      set_session(session, helpers)
+      set_i18n(i18n)
+
+      request = Request.new(js_req, helpers)
       verb_up = verb.to_s.upcase
       handler = @registry.dig(scope_id.to_s, verb_up)
       return Response.error(status: 404) unless handler

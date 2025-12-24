@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Session management helpers
+# Session management
 module Session
   class << self
     attr_accessor :current
