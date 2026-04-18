@@ -16,8 +16,10 @@ module Response
   # @param location [String] URL to redirect to
   # @param options [Hash] Redirect options (status code, etc.)
   # @return [Hash] Response object for the Primate framework
-  def self.redirect(location, options = {})
-    { __PRMT__: 'redirect', location: location, options: options }
+  def self.redirect(location, status = nil)
+    result = { __PRMT__: 'redirect', location: location }
+    result[:status] = status if status
+    result
   end
 
   # Create an error response
