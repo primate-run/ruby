@@ -19,9 +19,9 @@ Gem::Specification.new do |spec|
   spec.files = Dir["lib/**/*.rb", "sig/**/*.rbs"]
 
   spec.require_paths = ["lib"]
-  spec.required_ruby_version = ">= 3.0.0"
+  spec.required_ruby_version = ">= 3.4.0"
 
-  spec.add_development_dependency "bundler", "~> 2.0"
+  spec.add_development_dependency "bundler", "~> 4.0"
   spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "ruby-lsp", "~> 0.26"
 end

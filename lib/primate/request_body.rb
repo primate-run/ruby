@@ -4,43 +4,38 @@ require 'json'
 require_relative 'readable'
 require_relative 'uploaded_file'
 
-# Wrapper for request body with type-specific methods
+class Multipart
+  attr_reader :form, :files
+
+  def initialize(form, files)
+    @form = form
+    @files = files
+  end
+end
+
 class RequestBody
-  # Initialize with JavaScript body object
-  #
-  # @param body [Object] JavaScript body object from runtime
-  # @param helpers [Object] Helper functions from JavaScript runtime
   def initialize(body, helpers)
     @body = body
     @helpers = helpers
   end
 
-  # Get body as JSON (parsed hash)
-  #
-  # @return [Hash] Parsed JSON data
   def json
-    JSON.parse(@body.json.to_s)
+    JSON.parse(@body.jsonSync.to_s)
   end
 
-  # Get body as plain text
-  #
-  # @return [String] Body as string
   def text
-    @body.text.to_s
+    @body.textSync.to_s
   end
 
-  # Get form as hash
-  #
-  # @return [Hash] Form data
   def form
-    JSON.parse(@body.form.to_s)
+    JSON.parse(@body.formSync.to_s)
   end
 
-  def files
-    files = @body.files
-
-    Array.new(files[:length].to_i) do |i|
-      f = files[i]
+  def multipart
+    form = JSON.parse(@body.formSync.to_s)
+    files_js = @body.filesSync
+    files = Array.new(files_js[:length].to_i) do |i|
+      f = files_js[i]
       Primate::UploadedFile.new(
         field: f['field'].to_s,
         name:  f['name'].to_s,
@@ -49,10 +44,10 @@ class RequestBody
         bytes: f['bytes']
       )
     end
+    Multipart.new(form, files)
   end
 
-  def binary
-    binary = @body.binary
-    Primate::Readable.new(binary['buffer'], binary['mime'].to_s)
+  def blob
+    Primate::Readable.new(@body.blobSync, @body.blobTypeSync.to_s)
   end
 end

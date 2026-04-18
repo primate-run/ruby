@@ -10,28 +10,25 @@ module Route
   @current_scope = "__global__"
 
   class << self
-    # set the active scope for subsequent handler registrations
     def scope(id)
       @current_scope = id.to_s
       @registry[@current_scope]
     end
 
-    # clear routes for a specific scope (or the current scope if none given)
     def clear(id = nil)
       target = (id || @current_scope).to_s
       @registry.delete(target)
       @registry[target] = {}
     end
 
-    # return the verb->handler map for a scope (read-only use)
     def registry(id = nil)
       @registry[(id || @current_scope).to_s]
     end
 
     %w[GET POST PUT PATCH DELETE HEAD OPTIONS CONNECT TRACE].each do |verb|
-      define_method(verb.downcase) do |&block|
+      define_method(verb.downcase) do |content_type: nil, &block|
         raise ArgumentError, "block required" unless block
-        registry[verb] = block
+        registry[verb] = { handler: block, content_type: content_type }
       end
     end
 
@@ -47,12 +44,12 @@ module Route
       set_session(session, helpers)
       set_i18n(i18n)
 
-      request = Request.new(js_req, helpers)
       verb_up = verb.to_s.upcase
-      handler = @registry.dig(scope_id.to_s, verb_up)
-      return Response.error(status: 404) unless handler
+      entry = @registry.dig(scope_id.to_s, verb_up)
+      return Response.error(status: 404) unless entry
 
-      handler.call(request)
+      request = Request.new(js_req, helpers)
+      entry[:handler].call(request)
     end
   end
 end
