@@ -2,11 +2,11 @@
 
 module Primate
   class Readable
-    attr_reader :content_type
+    attr_reader :type
 
-    def initialize(typed_array, content_type = nil)
+    def initialize(typed_array, type = nil)
       @ta = typed_array
-      @content_type = content_type
+      @type = type
       @pos = 0
       @size = @ta[:length].to_i
     end
